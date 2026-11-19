@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>植物｜生殖與遺傳－遺傳概念</title>
+    <link rel="stylesheet" href="./tailwind-local.css">
+    <style>
+        /* ★ 強制橫屏防護網 */
+        #orientation-warning { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh; background: #0f172a; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; font-size: 1.5em; text-align: center; padding: 20px; box-sizing: border-box; }
+        @media (orientation: portrait) { #orientation-warning { display: flex; } }
+
+        /* ★ 修改點：改用 100dvh 避免行動裝置被位址列吃掉高度 */
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100dvh; overflow: hidden; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #ffffff; 
+        }
+        
+        #global-layout { display: flex; flex-direction: column; width: 100%; height: 100%; }
+
+        /* ★ 修改點：加入 flex-wrap 允許按鈕在小平板自動換行防擠破 */
+        #sub-nav-bar {
+            width: 100%; background: white; border-bottom: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+            padding: 8px 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 90;
+            flex-shrink: 0; 
+        }
+
+        #app-container {
+            display: flex; width: 100%; flex: 1; padding: 0; box-sizing: border-box; overflow: hidden;
+        }
+        
+        #stage-wrapper {
+            position: relative; flex: 1; width: 100%; height: 100%; overflow: hidden;
+            background: linear-gradient(to bottom, #ffffff, #f1f5f9);
+        }
+        
+        #stage-inner {
+            position: absolute; top: 0; left: 0; width: 1600px; height: 600px;
+            transform-origin: top left; pointer-events: none;
+        }
+
+        .flower-layer { position: absolute; top: 0; width: 800px; height: 600px; pointer-events: none;}
+        .flower-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+
+        .stage-panel {
+            position: absolute; pointer-events: auto; z-index: 100;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+            border: 2px solid #e2e8f0; border-radius: 16px; padding: 12px 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s;
+        }
+        
+        .stage-btn {
+            position: absolute; pointer-events: auto; z-index: 100;
+            padding: 10px 20px; font-size: 18px; font-weight: 900; border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+        }
+        
+        .geno-btn {
+            flex: 1; padding: 6px 0; border-radius: 9999px; border-width: 2px; transition: all 0.2s;
+        }
+        .geno-btn-unselected {
+            border-color: #cbd5e1; color: #94a3b8; font-weight: 500; background: white;
+        }
+        .geno-btn-unselected:hover { border-color: #6ee7b7; color: #10b981; }
+        
+        .geno-btn-selected {
+            border-color: #10b981; color: #064e3b; font-weight: 900; background: #d1fae5;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); transform: scale(1.05);
+        }
+
+        .status-blocked { opacity: 0.4; filter: grayscale(100%); pointer-events: none; }
+        .status-active { box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); animation: pulse-glow 2s infinite; border-color: #34d399; }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .center-action-btn {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            padding: 16px 32px; font-size: 22px; font-weight: 900; border-radius: 20px;
+            pointer-events: auto; z-index: 200; cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .center-action-btn:hover { transform: translate(-50%, -55%) scale(1.05); }
+        .hidden-center { opacity: 0; pointer-events: none; transform: translate(-50%, -20%) scale(0.8); }
+
+        .allele-text { font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif; font-weight: 900; }
+        
+        .pollen-dot {
+            position: absolute; width: 28px; height: 28px; background: radial-gradient(circle, #fde047 0%, #eab308 100%);
+            border: 2px solid #ca8a04; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 16px; font-weight: 900; color: #713f12; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transform: translate(-50%, -50%); transition: opacity 0.3s; z-index: 60;
+        }
+        
+        /* 強制花粉到最上層 */
+        .pollen-top { z-index: 1000 !important; }
+
+        @keyframes pollen-flash {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); box-shadow: 0 0 0 rgba(234, 179, 8, 0); }
+            50% { transform: translate(-50%, -50%) scale(1.5); filter: brightness(1.3); box-shadow: 0 0 25px rgba(234, 179, 8, 1); }
+        }
+        .pollen-flash-anim {
+            animation: pollen-flash 0.4s ease-in-out 3;
+        }
+        
+        .ovule-dot {
+            position: absolute; width: 32px; height: 32px; background: #dcfce3; border: 2px dashed #22c55e;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 18px; font-weight: 900; color: #166534; transform: translate(-50%, -50%); z-index: 40;
+        }
+        
+        @keyframes ovule-boom {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.8); filter: brightness(1.2); box-shadow: 0 0 30px rgba(255, 255, 255, 0.8); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+        .ovule-boom-anim {
+            animation: ovule-boom 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 900 !important;
+        }
+
+        .bee { position: absolute; font-size: 32px; transform: translate(-50%, -50%); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); z-index: 1100; }
+        
+        .fert-popup {
+            position: absolute; background: rgba(255,255,255,0.95); backdrop-filter: blur(4px);
+            border: 2px solid #34d399; border-radius: 8px; padding: 8px 16px; font-weight: 900; color: #065f46;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transform: translate(20px, -50%); opacity: 0;
+            transition: opacity 0.3s; z-index: 1000; white-space: nowrap; font-size: 18px;
+        }
+
+        #final-stats-board {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            background: white; border-radius: 24px; padding: 32px; width: 450px; max-width: 90vw; /* 防止小螢幕破版 */
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 4px solid #10b981;
+            opacity: 0; pointer-events: none; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000;
+        }
+        #final-stats-board.active { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+    </style>
+<link rel="stylesheet" href="./site_shell.css">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#267352">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="生殖與遺傳">
+
+    <style id="meiosis-inline-style">
+      /* 畫面原圖花藥／胚珠位置：小型、連續、直接銜接生成物，不是提示框 */
+      /* 與花粉／胚珠 DOM 使用完全相同的 1600×600 座標系；最終格直接落在後續粒子座標 */
+      .meiosis-on-flower{position:absolute;left:0;top:0;width:1600px;height:600px;pointer-events:none;z-index:180;opacity:0;transition:opacity .12s ease}
+      .meiosis-on-flower.visible{opacity:1}
+      .meiosis-on-flower svg{display:block;width:1600px;height:600px;overflow:visible}
+      .bee{will-change:left,top,opacity;line-height:1}
+    </style>
+</head>
+<body class="select-none text-slate-800">
+
+    <!-- ★ 強制橫屏防護罩 -->
+    <div id="orientation-warning" class="font-sans tracking-wider">
+        🔄<br><br>請將裝置旋轉為<b class="text-rose-400 mx-1">橫向模式</b>以進行課程互動。
+    </div>
+
+    <div id="global-layout">
+        
+       <!-- 全站統一導覽列 -->
+        <header id="plant-nav" class="plant-nav" data-page-mode="gene">
+  <div class="plant-brand"><span class="plant-brand-icon">🌿</span><div><strong>生殖與遺傳</strong><small>植物｜互動學習</small></div></div>
+  <nav class="plant-mode-links" aria-label="生殖與遺傳四個模式">
+    <a href="./index.html" class="plant-mode" data-mode="peach"><span>生殖器官：花</span><small>（水蜜桃）</small></a>
+    <a href="./stage4_pea.html" class="plant-mode" data-mode="pea"><span>生殖器官：花</span><small>（豌豆）</small></a>
+    <a href="./stage4_quiz.html" class="plant-mode" data-mode="quiz"><span>生殖挑戰題</span></a>
+    <a href="./stage4_gene.html" class="plant-mode" data-mode="gene"><span>遺傳實驗</span></a>
+  </nav>
+</header>
+
+        <div id="app-container">
+            <div id="stage-wrapper">
+                <div id="stage-inner">
+                    
+                    <svg id="click-layer" viewBox="0 0 1600 600" class="absolute inset-0 w-full h-full z-[1]" style="pointer-events: auto;"></svg>
+
+                    <!-- 【左側：母株】 -->
+                    <div id="mom-flower" class="flower-layer z-[5]" style="left: 0;"></div>
+                    
+                    <!-- 【右側：父株】 -->
+                    <div id="dad-flower" class="flower-layer z-[5]" style="left: 800px; transform: scaleX(-1);">
+                        <img src="./p03-m.webp" class="absolute inset-0 w-full h-full object-cover" id="initial-dad-img">
+                    </div>
+
+                    <!-- 面板定位避開中央阻擋 -->
+                    <div id="panel-geno-mom" class="stage-panel status-active" style="left: 280px; top: 100px; width: 260px;">
+                        <div class="text-sm font-black text-slate-600 mb-2 text-center">👩 母株基因型 <br><span id="label-mom-pheno" class="text-yellow-500">(性狀: 黃色種子)</span></div>
+                        <div class="flex gap-2">
+                            <button onclick="GeneApp.setGeno('mom', 'AA')" id="btn-mom-AA" class="geno-btn geno-btn-unselected" data-allele="yellow">AA</button>
+                            <button onclick="GeneApp.setGeno('mom', 'Aa')" id="btn-mom-Aa" class="geno-btn geno-btn-unselected" data-allele="yellow">Aa</button>
+                            <button onclick="GeneApp.setGeno('mom', 'aa')" id="btn-mom-aa" class="geno-btn geno-btn-unselected" data-allele="green">aa</button>
+                        </div>
+                    </div>
+
+                    <div id="panel-geno-dad" class="stage-panel status-active" style="left: 1060px; top: 100px; width: 260px;">
+                        <div class="text-sm font-black text-slate-600 mb-2 text-center">👨 父株基因型 <br><span id="label-dad-pheno" class="text-yellow-500">(性狀: 黃色種子)</span></div>
+                        <div class="flex gap-2">
+                            <button onclick="GeneApp.setGeno('dad', 'AA')" id="btn-dad-AA" class="geno-btn geno-btn-unselected" data-allele="yellow">AA</button>
+                            <button onclick="GeneApp.setGeno('dad', 'Aa')" id="btn-dad-Aa" class="geno-btn geno-btn-unselected" data-allele="yellow">Aa</button>
+                            <button onclick="GeneApp.setGeno('dad', 'aa')" id="btn-dad-aa" class="geno-btn geno-btn-unselected" data-allele="green">aa</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-confirm-geno" onclick="GeneApp.confirmGenotype()" class="center-action-btn bg-indigo-500 text-white border-2 border-indigo-600" style="top: 130px;">
+                        先選定父母基因型才能開始喔
+                    </button>
+
+                    <button id="btn-meiosis-dad" onclick="GeneApp.doDadMeiosis()" class="stage-btn bg-white border-2 border-blue-400 text-blue-600 status-blocked flex flex-col items-center leading-tight" style="left: 1050px; top: 430px;">
+                        <span>👨 減數分裂 ×4</span>
+                        <span class="text-sm font-bold text-blue-400 mt-1">花粉 <span id="count-dad" class="text-blue-600 ml-1">0/12</span></span>
+                    </button>
+
+                    <button id="btn-meiosis-mom" onclick="GeneApp.doMomMeiosis()" class="stage-btn bg-white border-2 border-emerald-400 text-emerald-600 status-blocked flex flex-col items-center leading-tight" style="left: 310px; top: 480px;">
+                        <span>👩 減數分裂 ×1</span>
+                        <span class="text-sm font-bold text-emerald-400 mt-1">胚珠 <span id="count-mom" class="text-emerald-600 ml-1">0/4</span></span>
+                    </button>
+
+                    <button id="btn-bee" onclick="GeneApp.sendBees()" class="center-action-btn bg-amber-400 text-amber-900 border-2 border-amber-500 hidden-center">
+                        🐝 授粉
+                    </button>
+
+                    <button id="btn-develop" onclick="GeneApp.playDevelopment()" class="center-action-btn bg-emerald-500 text-white border-2 border-emerald-600 hidden-center">
+                        🌱 開始果莢發育
+                    </button>
+
+                    <!-- SVG 管線層提昇 z-index 確保管線壓在花朵上 -->
+                    <svg id="svg-layer" viewBox="0 0 1600 600" class="absolute inset-0 w-full h-full pointer-events-none z-[45]">
+                        <path id="tube_0" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300"/>
+                        <path id="tube_1" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300"/>
+                        <path id="tube_2" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300"/>
+                        <path id="tube_3" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300"/>
+                    </svg>
+
+                    <div id="dom-layer" class="absolute inset-0 w-full h-full pointer-events-none z-[50]"></div>
+                    <!-- 在花朵原圖上浮現，不另開視窗或遮住教學畫面 -->
+                    <div id="meiosis-visual-mom" class="meiosis-on-flower mom" aria-hidden="true"></div>
+                    <div id="meiosis-visual-dad" class="meiosis-on-flower dad" aria-hidden="true"></div>
+
+                    <svg id="seed-layer" viewBox="0 0 1600 600" class="absolute inset-0 w-full h-full pointer-events-none z-[60]">
+                        <image id="seed_img_0" width="40" height="40" opacity="0"/>
+                        <image id="seed_img_1" width="40" height="40" opacity="0"/>
+                        <image id="seed_img_2" width="40" height="40" opacity="0"/>
+                        <image id="seed_img_3" width="40" height="40" opacity="0"/>
+                    </svg>
+                </div>
+            </div>
+    <div id="inherit-predict" class="inherit-predict" role="dialog" aria-modal="true" aria-label="預測子代性狀比例">
+      <div class="predict-card">
+        <h3>🔮 先預測，再看結果</h3>
+        <p id="inherit-question" style="margin-top:9px;color:#506d58;font-weight:700;font-size:15px">子代黃色：綠色，預測比例？</p>
+        <div class="predict-choice-grid" id="inherit-options">
+           <button type="button" data-ratio="4:0">4：0</button><button type="button" data-ratio="3:1">3：1</button>
+           <button type="button" data-ratio="2:2">2：2</button><button type="button" data-ratio="0:4">0：4</button>
+        </div>
+
+      </div>
+    </div>
+    <!-- 最終統計面板 -->
+            <div id="final-stats-board" role="dialog" aria-label="子代結果">
+                <div class="result-heading">🌱 子代結果</div>
+                <div class="result-cross"><span id="stat-cross">AA × AA</span></div>
+                <div class="result-numbers">
+                    <div><div class="result-caption" style="color:#ba7b0e">AA・黃</div><div class="result-value" style="color:#a16a0c" id="stat-AA">0</div></div>
+                    <div><div class="result-caption" style="color:#ba7b0e">Aa・黃</div><div class="result-value" style="color:#a16a0c" id="stat-Aa">0</div></div>
+                    <div><div class="result-caption" style="color:#1c8e58">aa・綠</div><div class="result-value" style="color:#16824d" id="stat-aa">0</div></div>
+                </div>
+                <div class="debrief-panel">
+                    <div class="debrief-grid"><span>理論 <strong id="model-rate">—</strong></span><span>實際 <strong id="actual-rate">—</strong></span></div>
+                    <span id="predicted-rate" hidden>—</span>
+                    <div class="debrief-question">為什麼和理論值不一定相同？</div>
+                    <div class="debrief-options"><div class="debrief-choice"><button type="button" onclick="GeneApp.answerDebrief(true)">樣本少、隨機波動</button></div><div class="debrief-choice"><button type="button" onclick="GeneApp.answerDebrief(false)">孟德爾定律失效</button><div id="debrief-teacher-note">💡 不懂就問老師！</div></div></div>
+                    <div id="debrief-feedback" class="debrief-feedback" aria-live="polite"></div>
+                </div>
+                <button onclick="GeneApp.resetAll()" class="result-restart">↻ 再試一次</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const GeneApp = (function() {
+            let currentStep = 0;
+            let meiosisBusy = false;
+            let experimentGeneration = 0;
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
+            // 花藥中心（雄株）及子房胚珠附近（雌株）共用舞台 1600x600 坐標。
+            // 產物結束座標直接取 DAD_ARC_INITIAL / OVULES_START，不維護另一組終點。
+            const MEIOSIS_CENTERS={dad:{x:1130,y:303},mom:{x:403,y:380}};
+            const SVGNS='http://www.w3.org/2000/svg';
+            // v1.1.4 同一輪廓收腰分裂：細胞外形與 A/a 文字由同一個時間軸、同一個群組更新。
+            // 不再讓字先飛走、再從其他位置飛入一個圓圈套住字。
+            const MEIO_COLORS={
+                dad:{fill:'#facc15',edge:'#ca8a04',text:'#713f12'},
+                mom:{fill:'#dcfce7',edge:'#22c55e',text:'#166534'}
+            };
+            function meiosisNode(svg,tag,attrs={}){
+                const node=document.createElementNS(SVGNS,tag);
+                for(const [key,val] of Object.entries(attrs))node.setAttribute(key,String(val));
+                svg.appendChild(node);return node;
+            }
+            function meiosisLabel(svg,x,y,label,parent,size=16){
+                return meiosisNode(svg,'text',{x,y,'font-family':'system-ui,sans-serif','font-weight':900,
+                  'font-size':size,'text-anchor':'middle','dominant-baseline':'central',fill:MEIO_COLORS[parent].text});
+            }
+            function paintCell(svg,x,y,r,label,parent,opacity=1){
+                const col=MEIO_COLORS[parent];
+                const g=meiosisNode(svg,'g',{opacity,transform:`translate(${x} ${y})`});
+                const circle=meiosisNode(g,'circle',{cx:0,cy:0,r,fill:col.fill,stroke:col.edge,
+                  'stroke-width':2,...(parent==='mom'?{'stroke-dasharray':'4 3'}:{})});
+                const t=meiosisLabel(g,0,1,label,parent,r<18?15:20);
+                t.textContent=label;
+                return {g,circle,t};
+            }
+            function peanutOutline(x,y,sep,r,neck,angle=0){
+                // 雙葉共享一個邊界；neck 逐漸縮到零，外觀看起來像麻糬被慢慢捏成兩半。
+                const d=[`M 0 ${-neck}`,
+                  `C ${-sep*.38} ${-neck} ${-sep*.52} ${-r} ${-sep} ${-r}`,
+                  `C ${-sep-r*.75} ${-r} ${-sep-r} ${-r*.55} ${-sep-r} 0`,
+                  `C ${-sep-r} ${r*.55} ${-sep-r*.75} ${r} ${-sep} ${r}`,
+                  `C ${-sep*.52} ${r} ${-sep*.38} ${neck} 0 ${neck}`,
+                  `C ${sep*.38} ${neck} ${sep*.52} ${r} ${sep} ${r}`,
+                  `C ${sep+r*.75} ${r} ${sep+r} ${r*.55} ${sep+r} 0`,
+                  `C ${sep+r} ${-r*.55} ${sep+r*.75} ${-r} ${sep} ${-r}`,
+                  `C ${sep*.52} ${-r} ${sep*.38} ${-neck} 0 ${-neck} Z`].join(' ');
+                return {d,transform:`translate(${x} ${y}) rotate(${angle})`};
+            }
+            async function meiosisAnimation(parent,genotype,products,landings,retainIndex=0){
+                const target=document.getElementById(`meiosis-visual-${parent}`);
+                const generation=experimentGeneration;
+                target.replaceChildren();target.classList.add('visible');
+                const svg=meiosisNode(target,'svg',{viewBox:'0 0 1600 600'});
+                const col=MEIO_COLORS[parent], c=MEIOSIS_CENTERS[parent];
+                const isAlive=()=>generation===experimentGeneration;
+                // 所有影格都由 rAF 同步產生細胞輪廓與其中的基因字母。
+                const tween=(duration,paint)=>new Promise(resolve=>{
+                    let start=null;
+                    function frame(now){
+                        if(!isAlive()){resolve(false);return;}
+                        if(start===null)start=now;
+                        const t=Math.max(0,Math.min(1,(now-start)/duration));
+                        paint(t);
+                        if(t<1)requestAnimationFrame(frame);else resolve(true);
+                    }
+                    requestAnimationFrame(frame);
+                });
+                const staged=paintCell(svg,c.x,c.y,30,genotype,parent);
+                await sleep(260);
+                if(!isAlive())return false;
+                // DNA 複製時同一顆細胞內的字逐漸換成 AAaa，細胞不會移動。
+                staged.t.textContent=genotype[0].repeat(2)+genotype[1].repeat(2);
+                if(!await tween(420,t=>{staged.circle.setAttribute('r',30+3*Math.sin(t*Math.PI));
+                  staged.g.setAttribute('transform',`translate(${c.x} ${c.y}) scale(${1+.09*Math.sin(t*Math.PI)},${1-.05*Math.sin(t*Math.PI)})`)}))return false;
+                staged.g.remove();
+                // 第一次分裂：從一顆連續的外膜開始收腰，直到分為兩個各帶一組字母的細胞。
+                const firstPath=meiosisNode(svg,'path',{fill:col.fill,stroke:col.edge,'stroke-width':2});
+                const firstLeft=meiosisLabel(svg,c.x,c.y,genotype[0].repeat(2),parent);
+                const firstRight=meiosisLabel(svg,c.x,c.y,genotype[1].repeat(2),parent);
+                firstLeft.textContent=genotype[0].repeat(2);firstRight.textContent=genotype[1].repeat(2);
+                if(!await tween(850,t=>{
+                    const sep=32*t,neck=26*Math.pow(1-t,1.3),r=28-10*t;
+                    const shape=peanutOutline(c.x,c.y,sep,r,neck);
+                    firstPath.setAttribute('d',shape.d);firstPath.setAttribute('transform',shape.transform);
+                    firstLeft.setAttribute('x',c.x-sep);firstRight.setAttribute('x',c.x+sep);
+                    firstLeft.setAttribute('opacity',Math.min(1,t*5));firstRight.setAttribute('opacity',Math.min(1,t*5));
+                }))return false;
+                firstPath.remove();firstLeft.remove();firstRight.remove();
+                // 第二次分裂：左右兩顆各自再次收腰，形成四顆；字母始終留在外膜內。
+                const second=[-32,32].map((off,i)=>{
+                  const path=meiosisNode(svg,'path',{fill:col.fill,stroke:col.edge,'stroke-width':2});
+                  const top=meiosisLabel(svg,c.x+off,c.y,genotype[i],parent,15);
+                  const bottom=meiosisLabel(svg,c.x+off,c.y,genotype[i],parent,15);
+                  top.textContent=genotype[i];bottom.textContent=genotype[i];
+                  return {off,path,top,bottom};
+                });
+                if(!await tween(850,t=>{
+                    for(const b of second){
+                        const sep=21*t,neck=17*Math.pow(1-t,1.3),r=19-4*t;
+                        const shape=peanutOutline(c.x+b.off,c.y,sep,r,neck,90);
+                        b.path.setAttribute('d',shape.d);b.path.setAttribute('transform',shape.transform);
+                        b.top.setAttribute('x',c.x+b.off);b.bottom.setAttribute('x',c.x+b.off);
+                        b.top.setAttribute('y',c.y-sep);b.bottom.setAttribute('y',c.y+sep);
+                        b.top.textContent=t<.2?genotype[b.off<0?0:1].repeat(2):genotype[b.off<0?0:1];
+                        b.bottom.setAttribute('opacity',Math.min(1,Math.max(0,(t-.12)*5)));
+                    }
+                }))return false;
+                second.forEach(b=>{b.path.remove();b.top.remove();b.bottom.remove()});
+                // 四顆細胞不是從外側飛進來，而是剛剛分裂完的四個位置直接接續。
+                const origins=[{x:c.x-32,y:c.y-21},{x:c.x-32,y:c.y+21},
+                               {x:c.x+32,y:c.y-21},{x:c.x+32,y:c.y+21}];
+                const cells=origins.map((pt,i)=>paintCell(svg,pt.x,pt.y,parent==='dad'?14:16,
+                    products[i],parent));
+                if(!await tween(680,t=>{
+                    const ease=t*t*(3-2*t);
+                    cells.forEach(({g},i)=>{
+                        const start=origins[i],dest=parent==='dad'?landings[i]:landings[0];
+                        const active=parent==='dad'||i===retainIndex;
+                        const x=start.x+(dest.x-start.x)*ease;
+                        const y=start.y+(dest.y-start.y)*ease;
+                        const size=active?1:1-.92*ease;
+                        g.setAttribute('transform',`translate(${x} ${y}) scale(${size})`);
+                        g.setAttribute('opacity',active?1:1-ease);
+                    });
+                }))return false;
+                return isAlive();
+            }
+            async function handoffProducts(parent,nodes){
+                // 顯示的終態 SVG 與實際互動粒子已是同一座標、同一大小；只交接圖層，不作二次移動。
+                nodes.forEach(node=>{node.style.opacity='1';});
+                const overlay=document.getElementById(`meiosis-visual-${parent}`);
+                overlay.classList.remove('visible');
+                await sleep(150);
+                overlay.replaceChildren();
+            }
+            function getMeiosisProducts(genotype){
+                // 同一次減數分裂產生的四個單倍體產物須為 2:2，而非四次各自抽籤。
+                const products=[genotype[0],genotype[0],genotype[1],genotype[1]];
+                for(let i=products.length-1;i>0;i--){
+                    const j=Math.floor(Math.random()*(i+1));
+                    [products[i],products[j]]=[products[j],products[i]];
+                }
+                return products;
+            }
+            function expectedRatio(){
+                 const pa=g=>g==='AA'?0:g==='Aa'?.5:1;
+                 const green=pa(state.momGeno)*pa(state.dadGeno);
+                 return `${Math.round((1-green)*4)}:${Math.round(green*4)}`;
+             }
+             function openPrediction(){
+                 if(state.prediction!==null)return;
+                 document.getElementById('inherit-question').textContent=`${state.momGeno} × ${state.dadGeno}：黃：綠預測比例？`; 
+                 document.getElementById('inherit-predict').classList.add('active');
+             }
+             function selectPrediction(ratio){
+                 if(currentStep!==3)return;
+                 state.prediction=ratio;
+                 document.getElementById('inherit-predict').classList.remove('active');
+                 els.btnBee.classList.remove('hidden-center');
+                 sendBees();
+             }
+             function answerDebrief(correct){
+                 document.getElementById('debrief-feedback').textContent=correct?'✓ 對！小樣本會波動。':'';
+                document.getElementById('debrief-teacher-note').classList.toggle('visible',!correct);
+             } 
+
+            const state = {
+                momGeno: 'AA', dadGeno: 'AA',
+                selectedMom:false, selectedDad:false,
+                momClicks: 0, dadClicks: 0,
+                 prediction: null,
+                ovules: [], pollens: [], results: []
+            };
+
+            const STIGMA_PTS = [{x: 556, y: 185}, {x: 571, y: 188}, {x: 575, y: 217}, {x: 578, y: 199}];
+            const OVULES_START = [{x: 373, y: 400}, {x: 384, y: 371}, {x: 408, y: 386}, {x: 425, y: 356}];
+            const OVULES_END = [{x: 392, y: 372}, {x: 461, y: 347}, {x: 528, y: 312}, {x: 587, y: 265}];
+            
+            let availableDadArcs = [];
+            const DAD_ARC_INITIAL = [
+                {x:1097,y:302},{x:1112,y:281},{x:1128,y:272},{x:1145,y:267},
+                {x:1162,y:282},{x:1152,y:300},{x:1133,y:295},{x:1115,y:311},
+                {x:1102,y:326},{x:1121,y:325},{x:1140,y:315},{x:1158,y:320},
+                {x:1088,y:286},{x:1170,y:299},{x:1130,y:341},{x:1106,y:340}
+            ];
+
+            const frames = ['p01.webp', 'p02.webp', 'p03.webp', 'p06.webp', 'p07.webp', 'p08.webp', 'p09.webp', 'p10.webp', 'p11.webp', 'p12.webp', 'p13.webp', 'p14.webp', 'p15.webp', 'p16.webp'];
+            let momImages = [];
+
+            const els = {
+                wrapper: document.getElementById('stage-wrapper'),
+                inner: document.getElementById('stage-inner'),
+                domLayer: document.getElementById('dom-layer'),
+                momContainer: document.getElementById('mom-flower'),
+                dadContainer: document.getElementById('dad-flower'),
+                pGenoMom: document.getElementById('panel-geno-mom'),
+                pGenoDad: document.getElementById('panel-geno-dad'),
+                btnConfirm: document.getElementById('btn-confirm-geno'),
+                btnDad: document.getElementById('btn-meiosis-dad'),
+                btnMom: document.getElementById('btn-meiosis-mom'),
+                btnBee: document.getElementById('btn-bee'),
+                btnDev: document.getElementById('btn-develop'),
+                initialDadImg: document.getElementById('initial-dad-img'),
+                statsBoard: document.getElementById('final-stats-board')
+            };
+
+            function init() {
+                frames.forEach((src, i) => {
+                    let img = new Image();
+                    img.className = 'flower-frame';
+                    img.decoding = 'async';
+                    img.fetchPriority = i<2?'high':'low';
+                    // 先呈現花朵，生長畫格由瀏覽器閒置時分批載入，避免 14 張同時搶網路。
+                    if(i<2)img.src=src;
+                    else setTimeout(()=>{img.src=src;},250+(i-2)*90);
+                    img.style.opacity = 0;
+                    els.momContainer.appendChild(img);
+                    momImages.push(img);
+                });
+
+                let initialMomImg = new Image();
+                initialMomImg.src = 'p03-f.webp';
+                initialMomImg.className = 'flower-frame';
+                initialMomImg.style.opacity = 1;
+                initialMomImg.id = 'initial-mom-img';
+                els.momContainer.appendChild(initialMomImg);
+
+                new ResizeObserver(handleResize).observe(els.wrapper);
+                document.querySelectorAll('#inherit-options button').forEach(btn =>
+                    btn.addEventListener('click', () => selectPrediction(btn.dataset.ratio)));
+                handleResize();
+                resetAll();
+            }
+
+            function handleResize() {
+                const availW = els.wrapper.clientWidth;
+                const availH = els.wrapper.clientHeight;
+                
+                // 放大互動主體：以 1280px 中央可視核心為準，左右最多裁掉非教學重點的邊景。
+                // 完整保持等比例縮放，字卡/受精管/花朵在同一座標系內，不會錯位。
+                const scale = Math.min(availW / 1280, availH / 600);
+                els.inner.style.transform = `scale(${scale})`;
+                
+                const actW = 1600 * scale; const actH = 600 * scale;
+                // 自動置中計算
+                els.inner.style.left = `${(availW - actW) / 2}px`;
+                els.inner.style.top = `${(availH - actH) / 2}px`;
+            }
+
+            function updatePhenoLabels() {
+                document.getElementById('label-mom-pheno').textContent = state.momGeno === 'aa' ? '(性狀: 綠色種子)' : '(性狀: 黃色種子)';
+                document.getElementById('label-mom-pheno').className = state.momGeno === 'aa' ? 'text-green-500' : 'text-yellow-500';
+                
+                document.getElementById('label-dad-pheno').textContent = state.dadGeno === 'aa' ? '(性狀: 綠色種子)' : '(性狀: 黃色種子)';
+                document.getElementById('label-dad-pheno').className = state.dadGeno === 'aa' ? 'text-green-500' : 'text-yellow-500';
+            }
+
+            function setGeno(target, val) {
+                if(currentStep !== 0) return; 
+
+                if(target === 'mom') {
+                    state.momGeno = val;
+                    state.selectedMom = true;
+                    document.querySelectorAll('[id^=btn-mom-]').forEach(b => { b.classList.remove('geno-btn-selected');b.classList.add('geno-btn-unselected'); });
+                    document.getElementById(`btn-mom-${val}`).classList.replace('geno-btn-unselected','geno-btn-selected');
+                } else {
+                    state.dadGeno = val;
+                    state.selectedDad = true;
+                    document.querySelectorAll('[id^=btn-dad-]').forEach(b => { b.classList.remove('geno-btn-selected');b.classList.add('geno-btn-unselected'); });
+                    document.getElementById(`btn-dad-${val}`).classList.replace('geno-btn-unselected','geno-btn-selected');
+                }
+                updatePhenoLabels();
+                updateStartButton();
+            }
+            function updateStartButton(){
+                const ready=state.selectedMom&&state.selectedDad;
+                els.btnConfirm.textContent=ready?'🌱 開始實驗':'先選定父母基因型才能開始喔';
+                els.btnConfirm.classList.toggle('waiting-genotype',!ready);
+                els.btnConfirm.classList.toggle('ready-genotype',ready);
+                els.btnConfirm.setAttribute('aria-disabled',ready?'false':'true');
+            }
+
+            function confirmGenotype() {
+                if(!state.selectedMom||!state.selectedDad)return;
+                proceedToStep(1);
+            }
+
+            function proceedToStep(step) {
+                currentStep = step;
+                
+                if(step === 0) {
+                    els.pGenoMom.classList.add('status-active'); els.pGenoDad.classList.add('status-active');
+                    els.btnConfirm.classList.remove('hidden-center');
+                    els.btnDad.classList.add('status-blocked'); els.btnDad.classList.remove('status-active');
+                    els.btnMom.classList.add('status-blocked'); els.btnMom.classList.remove('status-active');
+                    els.btnBee.classList.add('hidden-center');
+                    els.btnDev.classList.add('hidden-center');
+                }
+                else if(step === 1) {
+                    els.pGenoMom.classList.remove('status-active'); els.pGenoDad.classList.remove('status-active');
+                    els.btnConfirm.classList.add('hidden-center');
+                    els.btnDad.classList.remove('status-blocked'); els.btnDad.classList.add('status-active');
+                }
+                else if(step === 3) {
+                    els.btnDad.classList.add('status-blocked'); els.btnDad.classList.remove('status-active');
+                    els.btnMom.classList.add('status-blocked'); els.btnMom.classList.remove('status-active');
+                    if(state.prediction===null) openPrediction();
+                    else els.btnBee.classList.remove('hidden-center');
+                }
+                else if(step === 4) {
+                    els.btnDev.classList.remove('hidden-center');
+                }
+            }
+
+            function resetAll() {
+                experimentGeneration++; meiosisBusy=false;
+                document.querySelectorAll('.meiosis-on-flower').forEach(el=>{
+                    el.classList.remove('visible');el.replaceChildren();
+                });
+                document.getElementById('inherit-predict').classList.remove('active');
+                currentStep=0; // 先允許變更基因型，修復重設後仍保留上一輪的 bug
+                state.prediction=null;
+                state.selectedMom=false;state.selectedDad=false;
+                document.getElementById('debrief-feedback').textContent='';
+                document.getElementById('debrief-teacher-note').classList.remove('visible');
+                state.momClicks = 0; state.dadClicks = 0;
+                state.ovules = []; state.pollens = []; state.results = [];
+                availableDadArcs = [...DAD_ARC_INITIAL]; 
+                
+                document.getElementById('count-mom').textContent = "0/4";
+                document.getElementById('count-dad').textContent = "0/12";
+                
+                els.domLayer.innerHTML = '';
+                els.dadContainer.style.opacity = '1';
+                els.domLayer.style.opacity = '1';
+                document.getElementById('svg-layer').style.opacity = '1';
+                els.initialDadImg.style.opacity = '1';
+                document.getElementById('initial-mom-img').style.opacity = '1';
+                
+                for(let i=0; i<4; i++) {
+                    let t = document.getElementById(`tube_${i}`);
+                    t.style.strokeDashoffset = 300;
+                    t.setAttribute('d', ''); 
+                    
+                    document.getElementById(`seed_img_0`).setAttribute('opacity', 0);
+                    document.getElementById(`seed_img_1`).setAttribute('opacity', 0);
+                    document.getElementById(`seed_img_2`).setAttribute('opacity', 0);
+                    document.getElementById(`seed_img_3`).setAttribute('opacity', 0);
+                }
+                
+                momImages.forEach(img => img.style.opacity = 0);
+                els.statsBoard.classList.remove('active');
+                
+                state.momGeno='AA';state.dadGeno='AA';
+                for(const b of document.querySelectorAll('.geno-btn')){b.classList.remove('geno-btn-selected');b.classList.add('geno-btn-unselected');}
+                updatePhenoLabels();updateStartButton();proceedToStep(0);
+            }
+
+            async function doDadMeiosis() {
+                if(meiosisBusy || (currentStep!==1 && currentStep!==2))return;
+                if(state.dadClicks>=12 || availableDadArcs.length<4)return;
+                meiosisBusy=true;
+                const run=experimentGeneration;
+                els.btnDad.classList.add('status-blocked');
+                const first=(state.dadClicks===0);
+                const products=first?[state.dadGeno[0],state.dadGeno[0],state.dadGeno[1],state.dadGeno[1]]:getMeiosisProducts(state.dadGeno);
+                const destinations=[];
+                for(let i=0;i<4;i++){
+                  const idx=Math.floor(Math.random()*availableDadArcs.length);
+                  destinations.push(availableDadArcs.splice(idx,1)[0]);
+                }
+                // 首次播放完整分裂；之後四顆直接在花藥上出現，不再重播。
+                const completed=first?await meiosisAnimation('dad',state.dadGeno,products,destinations):true;
+                if(!completed||run!==experimentGeneration){meiosisBusy=false;return;}
+                const nodes=[];
+                for(let i=0;i<4;i++){
+                    const {x,y}=destinations[i],allele=products[i],pid=state.pollens.length;
+                    state.pollens.push({id:pid,allele,x,y});
+                    const node=document.createElement('div');
+                    node.className='pollen-dot allele-text';node.id=`pollen_${pid}`;
+                    node.textContent=allele;node.style.left=`${x}px`;node.style.top=`${y}px`;
+                    node.style.opacity=first?'0':'1';
+                    els.domLayer.appendChild(node);nodes.push(node);
+                }
+                if(first)await handoffProducts('dad',nodes);
+                else nodes.forEach(node=>node.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.7)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:230}));
+                state.dadClicks+=4;
+                document.getElementById('count-dad').textContent=`${state.dadClicks}/12`;
+                meiosisBusy=false;
+                if(state.pollens.length>=4 && currentStep===1){
+                    currentStep=2;els.btnMom.classList.remove('status-blocked');els.btnMom.classList.add('status-active');
+                }
+                if(state.dadClicks>=12){els.btnDad.classList.add('status-blocked');els.btnDad.classList.remove('status-active');}
+                else {els.btnDad.classList.remove('status-blocked');els.btnDad.classList.add('status-active');}
+            }
+
+            async function doMomMeiosis() {
+                if(meiosisBusy || currentStep!==2 || state.momClicks>=4 || state.pollens.length<4)return;
+                meiosisBusy=true;
+                const run=experimentGeneration;
+                els.btnMom.classList.add('status-blocked');
+                const index=state.momClicks,pos=OVULES_START[index];
+                const first=index===0;
+                const products=first?[state.momGeno[0],state.momGeno[0],state.momGeno[1],state.momGeno[1]]:getMeiosisProducts(state.momGeno);
+                const retainIndex=first?Math.floor(Math.random()*4):0;
+                const completed=first?await meiosisAnimation('mom',state.momGeno,products,[pos],retainIndex):true;
+                if(!completed||run!==experimentGeneration){meiosisBusy=false;return;}
+                const allele=products[retainIndex];state.ovules.push(allele);
+                const node=document.createElement('div');
+                node.className='ovule-dot allele-text';node.textContent=allele;node.id=`ovule_${index}`;
+                node.style.left=`${pos.x}px`;node.style.top=`${pos.y}px`;
+                node.style.opacity=first?'0':'1';els.domLayer.appendChild(node);
+                if(first)await handoffProducts('mom',[node]);
+                else node.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.7)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:230});
+                state.momClicks++;
+                document.getElementById('count-mom').textContent=`${state.momClicks}/4`;
+                meiosisBusy=false;
+                els.btnBee.textContent=`🐝 授粉（${state.momClicks} 顆）`;
+                els.btnBee.classList.remove('hidden-center');
+                if(state.momClicks>=4){els.btnMom.classList.add('status-blocked');els.btnMom.classList.remove('status-active');}
+                else {els.btnMom.classList.remove('status-blocked');els.btnMom.classList.add('status-active');}
+            }
+
+            // 根據目前顯示在螢幕上的舞台視窗限制蜂群，不只限制於原始 1600px 圖片。
+            function visibleFlightBounds(){
+                const wrapper=els.wrapper.getBoundingClientRect();
+                const stage=els.inner.getBoundingClientRect();
+                const scale=stage.width/1600||1;
+                const edge=36;
+                const left=clamp((wrapper.left-stage.left)/scale+edge,edge,1564);
+                const right=clamp((wrapper.right-stage.left)/scale-edge,edge,1564);
+                const top=clamp((wrapper.top-stage.top)/scale+edge,edge,564);
+                const bottom=clamp((wrapper.bottom-stage.top)/scale-edge,edge,564);
+                return {left,right,top,bottom};
+            }
+            function inView(x,y,b){return {x:clamp(x,b.left,b.right),y:clamp(y,b.top,b.bottom)};}
+            async function flyPath(bee,points,duration,bounds){
+                const pts=points.map(([x,y])=>inView(x,y,bounds));
+                const frames=pts.map((p,i)=>({left:`${p.x}px`,top:`${p.y}px`,offset:i/(pts.length-1)}));
+                const anim=bee.animate(frames,{duration,easing:'linear',fill:'forwards'});
+                await Promise.race([anim.finished.catch(()=>null),sleep(duration+320)]);
+                const last=pts[pts.length-1];
+                bee.style.left=`${last.x}px`;bee.style.top=`${last.y}px`;
+                anim.cancel();
+            }
+            function shuffle(array){
+                const a=[...array];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+                return a;
+            }
+            async function sendBees() {
+                if(currentStep===2 && state.ovules.length>0 && !meiosisBusy){
+                    currentStep=3;els.btnMom.classList.add('status-blocked');els.btnDad.classList.add('status-blocked');
+                    els.btnBee.classList.add('hidden-center');openPrediction();return;
+                }
+                if(currentStep!==3 || meiosisBusy || state.prediction===null)return;
+                currentStep=3.5; // 禁止連點造成重複授粉
+                els.btnBee.classList.add('hidden-center');
+                const count=Math.min(state.ovules.length,state.pollens.length,4);
+                const chosen=shuffle(state.pollens).slice(0,count);
+                const bounds=visibleFlightBounds();
+                const bees=[];
+                const jitter=(r)=>(Math.random()-.5)*r;
+                for(let i=0;i<chosen.length;i++){
+                    const bee=document.createElement('div');
+                    bee.className='bee';bee.textContent='🐝';
+                    const home=inView(chosen[i].x+55+jitter(30),chosen[i].y+42+jitter(28),bounds);
+                    bee.style.left=`${home.x}px`;bee.style.top=`${home.y}px`;
+                    els.domLayer.appendChild(bee);
+                    bees.push(bee);
+                }
+                // 先在父花花藥附近亂飛並沾取各自的花粉，再穿過花朵間空間前往柱頭。
+                await Promise.all(bees.map(async(bee,i)=>{
+                    const p=chosen[i], sx=parseFloat(bee.style.left), sy=parseFloat(bee.style.top);
+                    await sleep(i*160);
+                    await flyPath(bee,[
+                        [sx,sy],[p.x+42+jitter(90),p.y-55+jitter(40)],
+                        [p.x-25+jitter(60),p.y+35+jitter(65)],
+                        [p.x+25+jitter(70),p.y-15+jitter(60)],
+                        [p.x,p.y]
+                    ],1400,bounds);
+                    const dot=document.getElementById(`pollen_${p.id}`);
+                    if(dot){bee.appendChild(dot);dot.style.left='50%';dot.style.top='100%';}
+                }));
+                await sleep(200);
+                await Promise.all(bees.map(async(bee,i)=>{
+                    const p=chosen[i], target=STIGMA_PTS[i];
+                    const dx=target.x-p.x,dy=target.y-p.y;
+                    const path=[[p.x,p.y]];
+                    // 折線與上下波動形成自然的蜂群散飛；所有控制點嚴格限制於可見舞台。
+                    for(let k=1;k<=6;k++){
+                        const t=k/7;
+                        path.push([p.x+dx*t+jitter(65),p.y+dy*t+jitter(115)]);
+                    }
+                    path.push([target.x+32+jitter(26),target.y-24+jitter(24)]);
+                    path.push([target.x,target.y]);
+                    await sleep(i*145);
+                    await flyPath(bee,path,2700,bounds);
+                    const dot=document.getElementById(`pollen_${p.id}`);
+                    if(dot){
+                        els.domLayer.appendChild(dot);
+                        dot.style.left=`${target.x}px`;dot.style.top=`${target.y}px`;
+                    }
+                    // 到達柱頭後淡出，不再飛出學生可見畫面。
+                    const fade=bee.animate([{opacity:1},{opacity:0,transform:'translate(-50%,-50%) scale(.6)'}],{duration:360,fill:'forwards'});
+                    await Promise.race([fade.finished.catch(()=>null),sleep(420)]);
+                    bee.remove();
+                }));
+                await sleep(280);
+                await startFertilization(chosen);
+            }
+
+            async function startFertilization(selPollens) {
+                for(let i=0; i<selPollens.length; i++) {
+                    const pollen = selPollens[i];
+                    const egg = state.ovules[i];
+                    const pDiv = document.getElementById(`pollen_${pollen.id}`);
+                    const ovDiv = document.getElementById(`ovule_${i}`);
+                    const tube = document.getElementById(`tube_${i}`);
+                    
+                    const startX = STIGMA_PTS[i].x; const startY = STIGMA_PTS[i].y;
+                    const endX = OVULES_START[i].x; const endY = OVULES_START[i].y;
+                    
+                    pDiv.classList.add('pollen-top');
+                    pDiv.classList.add('pollen-flash-anim');
+                    await sleep(1200);
+                    pDiv.classList.remove('pollen-flash-anim');
+                    
+                    tube.setAttribute('d', `M ${startX} ${startY} C 542 221, 486 320, ${endX} ${endY}`);
+                    let anim = tube.animate([{ strokeDashoffset: 300 }, { strokeDashoffset: 0 }], { duration: 1000, fill: 'forwards' });
+                    await Promise.race([anim.finished.catch(() => null), sleep(1400)]);
+                    
+                    pDiv.classList.add('pollen-flash-anim');
+                    await sleep(1200);
+                    pDiv.classList.remove('pollen-flash-anim');
+                    
+                    pDiv.style.opacity = 0.3;
+                    let sperm = document.createElement('div');
+                    sperm.className = 'pollen-dot allele-text pollen-top'; sperm.style.transform = 'translate(-50%,-50%) scale(0.6)';
+                    sperm.textContent = pollen.allele; sperm.style.left = `${startX}px`; sperm.style.top = `${startY}px`;
+                    els.domLayer.appendChild(sperm);
+                    
+                    sperm.animate([{ left: `${startX}px`, top: `${startY}px` }, { left: `${endX}px`, top: `${endY}px` }], { duration: 1000, easing: 'ease-in' });
+                    await sleep(1000);
+                    sperm.remove();
+                    tube.style.opacity = 0.3;
+                    pDiv.classList.remove('pollen-top');
+                    
+                    let resultGeno = (pollen.allele === 'A' || egg === 'A') ? (pollen.allele === 'A' && egg === 'A' ? 'AA' : 'Aa') : 'aa';
+                    state.results.push(resultGeno);
+                    
+                    ovDiv.textContent = resultGeno;
+                    ovDiv.style.background = resultGeno === 'aa' ? '#86efac' : '#fde047'; 
+                    ovDiv.style.borderColor = resultGeno === 'aa' ? '#166534' : '#ca8a04';
+                    
+                    ovDiv.classList.add('ovule-boom-anim'); 
+                    
+                    let popup = document.createElement('div');
+                    popup.className = 'fert-popup';
+                    let colorName = resultGeno === 'aa' ? '綠色' : '黃色';
+                    popup.textContent = `${pollen.allele} + ${egg} ➔ ${resultGeno} (${colorName}種子)`;
+                    popup.style.left = `${endX}px`; popup.style.top = `${endY}px`;
+                    els.domLayer.appendChild(popup);
+                    
+                    popup.style.opacity = 1;
+                    await sleep(1200);
+                    popup.style.opacity = 0;
+                    ovDiv.classList.remove('ovule-boom-anim');
+                    setTimeout(() => popup.remove(), 300);
+                }
+                
+                proceedToStep(4);
+            }
+
+            async function playDevelopment() {
+                if(currentStep !== 4) return;
+                els.btnDev.classList.add('hidden-center');
+                
+                els.dadContainer.style.transition = 'opacity 2s'; els.dadContainer.style.opacity = '0.1';
+                els.domLayer.style.transition = 'opacity 1s'; els.domLayer.style.opacity = '0';
+                document.getElementById('svg-layer').style.transition = 'opacity 1s';
+                document.getElementById('svg-layer').style.opacity = '0';
+                
+                document.getElementById('initial-mom-img').style.opacity = 0;
+                
+                let totalSteps = 60; 
+                for(let step=0; step<=totalSteps; step++) {
+                    let currentFrame = 2 + (11 * (step / totalSteps)); 
+                    let lower = Math.floor(currentFrame);
+                    let upper = Math.ceil(currentFrame);
+                    let ratio = currentFrame - lower;
+
+                    momImages.forEach((img, i) => {
+                        let op = 0;
+                        if(i === lower) op = 1 - ratio;
+                        else if(i === upper) op = ratio;
+                        if(lower === upper && i === lower) op = 1;
+                        img.style.opacity = op;
+                    });
+
+                    const growthRatio = step / totalSteps;
+                    for(let i=0; i<4; i++) {
+                        let sImg = document.getElementById(`seed_img_${i}`);
+                        if(i>=state.results.length){sImg.setAttribute('opacity',0);continue;}
+                        
+                        if(state.results[i] === 'aa') {
+                            sImg.setAttribute('href', './pea_seed.webp');
+                        } else {
+                            sImg.setAttribute('href', './pea_seed2.webp');
+                        }
+                        
+                        let start = OVULES_START[i]; let end = OVULES_END[i];
+                        let curX = start.x + (end.x - start.x) * growthRatio;
+                        let curY = start.y + (end.y - start.y) * growthRatio;
+                        let size = 18 + 67 * growthRatio;
+                        
+                        sImg.setAttribute('x', curX - size/2); sImg.setAttribute('y', curY - size/2);
+                        sImg.setAttribute('width', size); sImg.setAttribute('height', size);
+                        sImg.setAttribute('opacity', Math.min(1, growthRatio * 2));
+                    }
+                    await sleep(40); 
+                }
+
+                showFinalStats();
+            }
+
+            function showFinalStats() {
+                document.getElementById('stat-cross').textContent = `${state.momGeno} × ${state.dadGeno}｜${state.results.length} 顆`; 
+                
+                let countAA = state.results.filter(r => r === 'AA').length;
+                let countAa = state.results.filter(r => r === 'Aa').length;
+                let countaa = state.results.filter(r => r === 'aa').length;
+                
+                document.getElementById('stat-AA').textContent = countAA;
+                document.getElementById('stat-Aa').textContent = countAa;
+                document.getElementById('stat-aa').textContent = countaa;
+                // 讓預測→理論→觀察真正對得起來。四顆是隨機樣本，不強制 3：1。
+                document.getElementById('predicted-rate').textContent = (state.prediction || '—').replace(':','：');
+                document.getElementById('model-rate').textContent = expectedRatio().replace(':','：');
+                document.getElementById('actual-rate').textContent = `${countAA+countAa}：${countaa}`;
+                document.getElementById('final-stats-board').classList.add('active');
+            }
+
+            return { init, setGeno, confirmGenotype, doDadMeiosis, doMomMeiosis, sendBees, playDevelopment, resetAll, answerDebrief };
+        })();
+
+        document.addEventListener("DOMContentLoaded", () => GeneApp.init());
+    </script>
+<script src="./site_shell.js"></script>
+</body>
+</html>

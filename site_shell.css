@@ -1,0 +1,118 @@
+/* 植物系列共通外框 v1.1.1；只處理介面，不覆蓋教學畫布 */
+:root{--plant-ink:#253b31;--plant-forest:#267352;--plant-soft:#eef8f1;--plant-border:#dfebdf}
+html,body{height:100dvh;overscroll-behavior:none}
+body{background:linear-gradient(115deg,#e8f8fd 0%,#f4f0fa 58%,#edfaf1 100%)!important;color:var(--plant-ink)}
+#global-layout{background:linear-gradient(115deg,#e8f8fd 0%,#f4f0fa 58%,#edfaf1 100%)!important;min-height:0;}
+.plant-nav{height:52px;min-height:52px;display:flex;align-items:center;gap:12px;justify-content:space-between;padding:0 clamp(10px,2.25vw,30px);flex:none;position:relative;z-index:120;background:rgba(255,255,255,.86);border-bottom:1px solid #e4efea;backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);box-shadow:0 6px 22px #8aa0b319}
+.plant-brand{display:flex;align-items:center;gap:10px;flex-shrink:0;min-width:0}
+.plant-brand-icon{font-size:26px;line-height:1}
+.plant-brand strong{display:block;font-size:16px;font-weight:850;line-height:1.25;color:#24392e;white-space:nowrap}
+.plant-brand small{display:block;font-size:10px;color:#738581;white-space:nowrap}
+.plant-mode-links{display:flex;align-items:center;gap:7px;justify-content:flex-end;min-width:0;flex-wrap:nowrap}
+.plant-mode{display:inline-flex;align-items:center;justify-content:center;min-height:35px;padding:7px clamp(7px,1.2vw,16px);border-radius:999px;color:#496a5b;text-decoration:none;font-size:clamp(11px,1.2vw,14px);font-weight:780;white-space:nowrap;border:1px solid transparent;transition:background .18s,border .18s,color .18s}
+.plant-mode:hover,.plant-mode:focus-visible{background:#e9f6ee;border-color:#c2e5ce;outline:none}
+.plant-mode[aria-current="page"]{background:#def3e5;color:#17653c;border:1px solid #b8dfc5;box-shadow:0 2px 7px #38774c16}
+#app-container{min-height:0;padding:clamp(7px,1vw,13px)!important;gap:clamp(7px,.85vw,13px)!important}
+#left-sidebar{gap:clamp(7px,.85vw,13px)!important;min-height:0}
+#left-sidebar .panel-block{background:rgba(255,255,255,.96);border:1px solid var(--plant-border);border-radius:18px;box-shadow:0 8px 26px #8aa0b315}
+#stage-wrapper{border-radius:18px!important;background:#fff;box-shadow:0 8px 26px #8aa0b31a!important;border:1px solid #e6ede9;min-width:0;min-height:0}
+#stage-wrapper:focus-within{outline:0}
+button{touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:3px solid #3a9a72;outline-offset:2px}
+#orientation-warning{background:#163a2e!important}
+@media (max-width:900px){.plant-nav{height:47px;min-height:47px;padding:0 8px;gap:5px}.plant-brand-icon{font-size:21px}.plant-brand{gap:5px}.plant-brand strong{font-size:13px}.plant-brand small{font-size:9px}.plant-mode-links{gap:3px}.plant-mode{min-height:31px;padding:5px 7px;font-size:11px}}
+@media (max-width:650px){.plant-brand small{display:none}.plant-brand strong{font-size:12px}.plant-mode{padding:5px 4px;font-size:10px}.plant-nav{gap:2px}}
+@media (max-height:650px) and (orientation:landscape){.plant-nav{height:43px;min-height:43px}.panel-block{padding:10px!important}.plant-brand small{display:none}}
+/* 小平板：兩個授粉實驗的左欄保持相同寬度，讓花圖盡可能完整 */
+@media (min-width:801px){#app-container:has(#left-sidebar){grid-template-columns:clamp(215px,24vw,290px) minmax(0,1fr)!important}}
+/* 統一評量、遺傳畫布的外框；不改動原本 800x600 / 1600x600 座標 */
+#quiz-header-card{border:1px solid var(--plant-border)!important;box-shadow:0 4px 15px #8aa0b315!important}
+#quiz-image-container{background:#fff!important;border:1px solid var(--plant-border)!important}
+#stage-wrapper #stage-inner{will-change:transform}
+#final-stats-board{max-height:calc(100dvh - 66px);overflow-y:auto;padding:18px!important;z-index:2500}
+/* 預測、解釋：教學內容一次只顯示一個問題 */
+.inherit-predict{position:fixed;inset:0;z-index:2400;display:none;align-items:center;justify-content:center;background:rgba(21,49,35,.58);backdrop-filter:blur(5px);padding:16px}
+.inherit-predict.active{display:flex}
+.predict-card{width:min(94vw,490px);background:white;border-radius:22px;padding:24px;border:2px solid #b7dfc2;box-shadow:0 20px 55px #153a2d42;text-align:center}
+.predict-card h3{color:#245d41;font-weight:900;font-size:20px}
+.predict-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0 6px}
+.predict-choice-grid button{background:#f0f8f3;border:2px solid #cbe5d2;color:#205b3d;padding:14px 8px;border-radius:14px;font-weight:900;font-size:22px}
+.predict-choice-grid button:hover{background:#ddf2e5;border-color:#55b787}
+.prediction-memory{font-size:13px;color:#65796d;margin:0 auto 10px;text-align:center}
+.debrief-panel{margin-top:10px;border-top:1px solid #e2ece4;padding-top:10px}
+.debrief-grid{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0;font-size:12px}
+.debrief-grid strong{font-size:18px;color:#257454}
+.debrief-question{font-weight:900;color:#274d37;font-size:14px;margin-bottom:8px}
+.debrief-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.debrief-options button{padding:9px 6px;border-radius:12px;background:#edf7f0;border:1px solid #bfdcc7;color:#335b42;font-size:12px;font-weight:750}
+.debrief-options button:hover{background:#dcf1e3}
+.debrief-feedback{font-size:12px;font-weight:750;color:#24744d;min-height:26px;margin-top:8px}
+@media (max-height:690px){.meiosis-card{padding:16px}.meiosis-cell{min-height:58px;min-width:56px;font-size:22px}.meiosis-cells{min-height:64px}}
+
+/* v1.1.2: 四個模式橫向均分，清楚顯示兩行的授粉模式名稱 */
+.plant-nav{gap:clamp(8px,1.3vw,22px);padding:0 clamp(9px,1.6vw,24px)}
+.plant-brand{flex:0 0 clamp(132px,16vw,216px)}
+.plant-mode-links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));flex:1;gap:clamp(6px,1.1vw,17px);justify-content:stretch;min-width:0}
+.plant-mode{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:40px;padding:4px 6px;border-radius:13px;font-size:clamp(12px,1.28vw,17px);font-weight:850;text-align:center;line-height:1.12;white-space:normal}
+.plant-mode small{font-size:clamp(10px,1vw,12px);font-weight:750;line-height:1.08}
+.plant-mode[aria-current="page"]{background:#d5f0e0;border:1px solid #7fcca6;box-shadow:0 3px 10px #26735220}
+@media(max-width:1050px){.plant-brand{flex-basis:125px}.plant-mode-links{gap:5px}.plant-mode{font-size:12px;padding:3px 3px;min-height:39px}.plant-mode small{font-size:10px}}
+@media(max-width:650px){.plant-brand{flex-basis:74px}.plant-brand small{display:none}.plant-brand-icon{font-size:18px}.plant-brand strong{font-size:11px}.plant-mode{font-size:10px;min-height:36px;padding:2px 2px}.plant-mode small{font-size:9px}}
+/* 結果頁：保留必要證據，去掉多餘說明 */
+#final-stats-board{width:min(480px,92vw);max-height:calc(100dvh - 74px);overflow-y:auto;padding:16px!important;border-width:3px!important;border-radius:20px!important}
+#final-stats-board .result-heading{font-size:21px;line-height:1.25;margin:0 0 10px;color:#14855a;font-weight:900;text-align:center}
+#final-stats-board .result-cross{font-size:14px;text-align:center;padding:8px 10px;margin-bottom:10px;background:#f3f9f5;border:1px solid #dcebe1;border-radius:12px;font-weight:750;color:#456254}
+#final-stats-board .result-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+#final-stats-board .result-numbers > div{padding:8px 3px;border-radius:12px;border:1.5px solid #d7e8d9;background:#f8fcf8}
+#final-stats-board .result-numbers .result-value{font-size:26px;font-weight:900;line-height:1.25}
+#final-stats-board .result-numbers .result-caption{font-size:13px;font-weight:850}
+#final-stats-board .debrief-panel{margin-top:10px;padding-top:9px}
+#final-stats-board .debrief-grid{display:flex;justify-content:space-around;gap:10px;font-size:13px;margin:5px 0 9px}
+#final-stats-board .debrief-grid strong{font-size:19px}
+#final-stats-board .debrief-question{font-size:14px;margin-bottom:7px}
+#final-stats-board .debrief-options button{font-size:13px;min-height:35px}
+#final-stats-board .debrief-feedback{font-size:12px;min-height:19px;margin-top:5px}
+#final-stats-board .result-restart{width:100%;margin-top:10px;padding:10px;background:#267352;border-radius:13px;color:white;font-weight:850}
+
+/* v1.1.3 不同載具：橫向手機保留四個大分頁，避免標題佔據操作空間 */
+@media (max-width:760px) and (orientation:landscape){
+ .plant-nav{height:44px;min-height:44px;padding:0 5px;gap:4px}
+ .plant-brand{flex:0 0 54px;gap:2px}.plant-brand-icon{font-size:16px}.plant-brand strong{font-size:10px;letter-spacing:-.03em}
+ .plant-mode-links{gap:3px}.plant-mode{min-height:36px;font-size:11px;padding:2px 1px;line-height:1.08}.plant-mode small{font-size:9px}
+ #app-container{padding:4px!important;gap:4px!important}
+}
+@media (max-height:470px) and (orientation:landscape){
+ .plant-nav{height:42px;min-height:42px}.plant-brand small{display:none}
+ #left-sidebar{gap:5px!important}.panel-block{padding:7px!important}
+ #quiz-header-card{padding:7px 14px!important}#quiz-options-grid{gap:6px!important}
+ .option-btn{padding:7px 10px!important}.predict-card{padding:12px!important}
+}
+
+/* v1.1.4: 導覽四模式都有明顯外框，沿用系列淡綠配色 */
+.plant-mode{border:1.5px solid #a7c8b4!important;background:rgba(249,253,250,.96);box-shadow:0 1px 3px #385d4530;transition:background .2s,border-color .2s,box-shadow .2s}
+.plant-mode:hover,.plant-mode:focus-visible{border-color:#399b70!important;background:#e5f6eb;box-shadow:0 2px 8px #2b70402b}
+.plant-mode[aria-current="page"]{border:2px solid #19885a!important;background:#d8f2e3;box-shadow:0 2px 8px #1c845936}
+/* 題目可讀、長題幹自動換行，右側進度不擠壓文字 */
+#quiz-header-card{padding:12px 20px!important;min-height:78px;align-items:center;gap:clamp(12px,2vw,24px)!important}
+#question-text{font-size:clamp(16px,1.55vw,21px)!important;line-height:1.45;letter-spacing:.005em;overflow-wrap:anywhere;min-width:0}
+#quiz-header-card>div:last-child{width:110px;flex-shrink:0}
+#explanation-card.is-correct{width:auto;max-width:280px;padding:14px 28px;white-space:nowrap;text-align:center;border-radius:16px}
+#explanation-card.is-correct #exp-content,#explanation-card.is-correct #close-exp-btn{display:none}
+#explanation-card.is-correct #exp-title{font-size:22px!important}
+@media(max-height:510px) and (orientation:landscape){#quiz-header-card{padding:7px 13px!important;min-height:64px}#question-text{font-size:15px!important;line-height:1.3}}
+/* 父母基因型：按顯性／隱性表現型用黃／綠辨識 */
+.geno-btn-unselected{border:2px solid #d4d9d1!important;color:#64756d!important;background:rgba(255,255,255,.95)!important;font-weight:750}
+.geno-btn[data-allele="yellow"].geno-btn-selected{border:2px solid #eab308!important;background:#fef3b5!important;color:#935c06!important;box-shadow:0 3px 9px #b68b2530}
+.geno-btn[data-allele="green"].geno-btn-selected{border:2px solid #20a264!important;background:#bbf7d0!important;color:#12653b!important;box-shadow:0 3px 9px #20a26430}
+.geno-btn[data-allele="yellow"]:not(.geno-btn-selected){border-color:#ecd88e!important;color:#ac7a13!important;background:#fffdf3!important}
+.geno-btn[data-allele="green"]:not(.geno-btn-selected){border-color:#9ed7b3!important;color:#31825b!important;background:#f5fff8!important}
+#btn-confirm-geno.waiting-genotype{background:#edf4ef!important;border-color:#a9cfb5!important;color:#567967!important;box-shadow:0 4px 12px #153d2b10!important;cursor:default}
+#btn-confirm-geno.ready-genotype{background:#2c9968!important;border-color:#1d8858!important;color:white!important}
+#final-stats-board .debrief-grid{font-size:14px!important;gap:8px;flex-wrap:wrap}
+#final-stats-board .debrief-question{font-size:15px!important}
+#final-stats-board .debrief-feedback{min-height:0!important}
+#final-stats-board .debrief-options button{position:relative}
+#debrief-teacher-note{font-size:11px;color:#a65b1d;font-weight:750;margin-top:6px;display:none}
+#debrief-teacher-note.visible{display:block}
+
+.debrief-choice{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:3px}.debrief-choice button{width:100%;height:100%}#debrief-teacher-note{margin:1px 0 0;line-height:1.2;text-align:center;color:#a75a26}
